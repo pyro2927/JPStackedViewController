@@ -16,6 +16,7 @@
 		D84E051D165F4C380064FDE3 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = D84E051C165F4C380064FDE3 /* Default.png */; };
 		D84E051F165F4C380064FDE3 /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D84E051E165F4C380064FDE3 /* Default@2x.png */; };
 		D84E0521165F4C380064FDE3 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D84E0520165F4C380064FDE3 /* Default-568h@2x.png */; };
+		D84E0529165F4DF60064FDE3 /* JPStackedViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D84E0528165F4DF60064FDE3 /* JPStackedViewController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,8 @@
 		D84E051C165F4C380064FDE3 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
 		D84E051E165F4C380064FDE3 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
 		D84E0520165F4C380064FDE3 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
+		D84E0527165F4DF60064FDE3 /* JPStackedViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JPStackedViewController.h; sourceTree = "<group>"; };
+		D84E0528165F4DF60064FDE3 /* JPStackedViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JPStackedViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,6 +83,8 @@
 			children = (
 				D84E0519165F4C380064FDE3 /* JPAppDelegate.h */,
 				D84E051A165F4C380064FDE3 /* JPAppDelegate.m */,
+				D84E0527165F4DF60064FDE3 /* JPStackedViewController.h */,
+				D84E0528165F4DF60064FDE3 /* JPStackedViewController.m */,
 				D84E0511165F4C380064FDE3 /* Supporting Files */,
 			);
 			path = Stacked;
@@ -167,6 +172,7 @@
 			files = (
 				D84E0517165F4C380064FDE3 /* main.m in Sources */,
 				D84E051B165F4C380064FDE3 /* JPAppDelegate.m in Sources */,
+				D84E0529165F4DF60064FDE3 /* JPStackedViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
