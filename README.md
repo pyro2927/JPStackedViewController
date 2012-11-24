@@ -26,3 +26,7 @@ Stack multiple view controllers that can be moved around.  Both Swiping and pann
     JPStackedViewController *stacky = [[JPStackedViewController alloc] initWithViewControllers:[NSArray arrayWithObjects:nav, nav2, nav3, nav4, nil]];
     
     self.window.rootViewController = stacky;
+
+## Picture
+
+![](https://raw.github.com/pyro2927/JPStackedViewController/master/stacked.gif)
