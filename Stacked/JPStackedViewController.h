@@ -8,9 +8,12 @@
 
 #import <UIKit/UIKit.h>
 
-@interface JPStackedViewController : UIViewController{
+@interface JPStackedViewController : UIViewController<UIGestureRecognizerDelegate>{
     NSMutableArray *stackedViews;
     CGFloat firstX;
+    bool panGestureStarted;
+    NSDate *swipeGestureEndedTime;
+    UISwipeGestureRecognizerDirection swipeDirection;
 }
 
 - (id)initWithViewControllers:(NSArray*)viewControllers;
