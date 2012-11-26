@@ -11,10 +11,12 @@
 @interface JPStackedViewController : UIViewController<UIGestureRecognizerDelegate>{
     NSMutableArray *stackedViews;
     CGFloat firstX;
-    bool panGestureStarted;
     NSDate *swipeGestureEndedTime;
     UISwipeGestureRecognizerDirection swipeDirection;
+    bool snapsToSides;
 }
+
+@property bool snapsToSides;
 
 - (id)initWithViewControllers:(NSArray*)viewControllers;
 

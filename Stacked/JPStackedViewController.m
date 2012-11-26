@@ -14,6 +14,7 @@
 @end
 
 @implementation JPStackedViewController
+@synthesize snapsToSides;
 
 -(void)shiftViewToTheRight:(UIView*)view xOffset:(CGFloat)x{
     CGRect origFrame = view.frame;
@@ -44,14 +45,20 @@
     CGPoint translatedPoint = [sender translationInView:self.view];
     if ([sender state] == UIGestureRecognizerStateBegan) {
         firstX = translatedPoint.x;
-        panGestureStarted = YES;
     } else if ([sender state] == UIGestureRecognizerStateCancelled || [sender state] == UIGestureRecognizerStateEnded) {
-        panGestureStarted = NO;
+        int layer = [stackedViews indexOfObject:sender.view] + 1;
+        CGFloat xOffset = self.view.frame.size.width - layer * kMinWidth;
 //        see if we end this shortly after our swipe gesture
-        if (swipeGestureEndedTime && [[NSDate date] timeIntervalSinceDate:swipeGestureEndedTime] <= kSwipeMarginTime) {
-            if (swipeDirection == UISwipeGestureRecognizerDirectionRight) {
-                int layer = [stackedViews indexOfObject:sender.view] + 1;
-                CGFloat xOffset = self.view.frame.size.width - layer * kMinWidth;
+        if ( (swipeGestureEndedTime && [[NSDate date] timeIntervalSinceDate:swipeGestureEndedTime] <= kSwipeMarginTime) || snapsToSides) {
+            bool goRight = NO;
+            if (swipeGestureEndedTime && [[NSDate date] timeIntervalSinceDate:swipeGestureEndedTime] <= kSwipeMarginTime) {
+                goRight = (swipeDirection == UISwipeGestureRecognizerDirectionRight);
+            } else {
+                CGFloat currentX = sender.view.frame.origin.x;
+                goRight = (currentX > xOffset - currentX);
+            }
+//            go right or left
+            if (goRight) {
                 [UIView animateWithDuration:0.2f animations:^{
                     [self shiftViewToTheRight:sender.view xOffset:xOffset];
                 }];
@@ -62,7 +69,7 @@
                 }];
             }
         }
-    } else{
+    } else {
         CGRect origFrame = sender.view.frame;
         int layer = [stackedViews indexOfObject:sender.view] + 1;
         CGFloat xOffset = MAX(0, MIN(origFrame.origin.x + translatedPoint.x - firstX, self.view.frame.size.width - layer * kMinWidth));
@@ -114,6 +121,8 @@
             }
             [stackedViews addObject:vc.view];
         }
+        
+        self.snapsToSides = NO;
     }
     return self;
 }

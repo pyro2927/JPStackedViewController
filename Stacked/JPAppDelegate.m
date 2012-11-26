@@ -36,7 +36,7 @@
     [nav4.navigationBar setTintColor:[UIColor greenColor]];
     
     JPStackedViewController *stacky = [[JPStackedViewController alloc] initWithViewControllers:[NSArray arrayWithObjects:nav, nav2, nav3, nav4, nil]];
-    
+    [stacky setSnapsToSides:YES];
     self.window.rootViewController = stacky;
     
     self.window.backgroundColor = [UIColor whiteColor];
