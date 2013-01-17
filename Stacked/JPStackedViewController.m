@@ -9,6 +9,9 @@
 #import "JPStackedViewController.h"
 #define kMinWidth       50
 #define kSwipeMarginTime    0.1f
+#define kAnimationDuration  0.2f
+#define kHopWidth           44
+
 @interface JPStackedViewController ()
 
 @end
@@ -16,6 +19,21 @@
 @implementation JPStackedViewController
 @synthesize snapsToSides;
 @synthesize style;
+
+//slide our views to show the one with the passed index
+-(void)openToIndex:(int)viewIndex{
+    CGFloat width = self.view.frame.size.width;
+    UIView *view = [(UIViewController*)[stackedViews objectAtIndex:viewIndex] view];
+    __block int outerIndex = viewIndex;
+    [UIView animateWithDuration:kAnimationDuration animations:^{
+        [self shiftViewToTheLeft:view xOffset:0];
+        if (viewIndex > 0) {
+            CGFloat xOffset = width - outerIndex-- * kMinWidth;
+            UIView *view2 = [(UIViewController*)[stackedViews objectAtIndex:outerIndex] view];
+            [self shiftViewToTheRight:view2 xOffset:xOffset];
+        }
+    }];
+}
 
 -(void)shiftViewToTheRight:(UIView*)view xOffset:(CGFloat)x{
     int layer = view.tag;
@@ -67,12 +85,12 @@
             }
 //            go right or left
             if (goRight) {
-                [UIView animateWithDuration:0.2f animations:^{
+                [UIView animateWithDuration:kAnimationDuration animations:^{
                     [self shiftViewToTheRight:sender.view xOffset:xOffset];
                 }];
             } else {
 //                swipe left!
-                [UIView animateWithDuration:0.2f animations:^{
+                [UIView animateWithDuration:kAnimationDuration animations:^{
                     [self shiftViewToTheLeft:sender.view xOffset:0];
                 }];
             }
@@ -97,7 +115,48 @@
     swipeGestureEndedTime = [NSDate date];
 }
 
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer{
+-(void)hop:(UITapGestureRecognizer*)tapper{
+    CGPoint translatedPoint = [tapper locationInView:tapper.view];
+    if (translatedPoint.x > 50) {
+        return;
+    }
+    int layer = tapper.view.tag;
+    __block UIView *view = [(UIViewController*)[stackedViews objectAtIndex:layer] view];
+//    slide out
+    [UIView animateWithDuration:0.15f delay:0.0f options:UIViewAnimationOptionCurveEaseOut animations:^{
+        CGRect frame = view.frame;
+        frame.origin.x += kHopWidth;
+        view.frame = frame;
+    } completion:^(BOOL finished) {
+//        now slide back in
+        [UIView animateWithDuration:0.15f delay:0.05f options:UIViewAnimationOptionCurveEaseIn animations:^{
+            CGRect frame = view.frame;
+            frame.origin.x = 0;
+            view.frame = frame;
+        } completion:^(BOOL finished) {
+//            now we have a baby hop
+            [UIView animateWithDuration:0.1f delay:0.0f options:UIViewAnimationOptionCurveEaseOut animations:^{
+                CGRect frame = view.frame;
+                frame.origin.x += kHopWidth/3;
+                view.frame = frame;
+            } completion:^(BOOL finished) {
+                //        now slide back in for the final time
+                [UIView animateWithDuration:0.1f delay:0.0f options:UIViewAnimationOptionCurveEaseIn animations:^{
+                    CGRect frame = view.frame;
+                    frame.origin.x = 0;
+                    view.frame = frame;
+                } completion:^(BOOL finished) {
+                }];
+            }];
+        }];
+    }];
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
+    // Disallow recognition of tap gestures in the button.
+    if ([touch.view isKindOfClass:[UIButton class]] && (style & JPSTYLE_IGNORE_BUTTONS)) {
+        return NO;
+    }
     return YES;
 }
 
@@ -149,11 +208,17 @@
             [leftswiper setDelegate:self];
             [leftswiper setDirection:UISwipeGestureRecognizerDirectionLeft];
             
+//            see if we should only allow them to touch our nav
             if (style & JPSTYLE_TOUCH_NAV_ONLY){
                 if ([vc isKindOfClass:[UINavigationController class]]) {
                     [((UINavigationController*)vc).navigationBar addGestureRecognizer:panner];
                     [((UINavigationController*)vc).navigationBar addGestureRecognizer:swiper];
                     [((UINavigationController*)vc).navigationBar addGestureRecognizer:leftswiper];
+//                    see if the hop animation should be added
+                    if (style & JPSTYLE_VIEW_HOP) {
+                        UITapGestureRecognizer *tapper = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hop:)];
+                        [((UINavigationController*)vc).navigationBar addGestureRecognizer:tapper];
+                    }
                 }
             } else {
                 [vc.view addGestureRecognizer:panner];
