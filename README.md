@@ -57,3 +57,7 @@ In action:
 Compressed:
 
 ![](https://raw.github.com/pyro2927/JPStackedViewController/master/compressed.png)
+
+Comressed & Snap to Side:
+
+![](https://raw.github.com/pyro2927/JPStackedViewController/master/styles.gif)
