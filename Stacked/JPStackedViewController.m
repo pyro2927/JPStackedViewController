@@ -40,14 +40,15 @@
     view = [(UIViewController*)[stackedViews objectAtIndex:layer] view];
     CGRect origFrame = view.frame;
     view.frame = CGRectMake(x, origFrame.origin.y, origFrame.size.width, origFrame.size.height);
+//    loop over views that are to the right of this one
     for (int i = layer - 1; i >= 0; i--) {
         UIViewController *vc = [stackedViews objectAtIndex:i];
         UIView *subView = vc.view;
-        x+= kMinWidth;
+//        calculate how much space is to our right, divide by the number of layers visible, use that as spacing
+        x+= (style & JPSTYLE_COMPRESS_VIEWS ? MIN((self.view.frame.size.width - view.frame.origin.x)/(layer + 1), kMinWidth) : kMinWidth);
         if (subView.frame.origin.x < x) {
             subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
         }
-        x = subView.frame.origin.x;
     }
 }
 
@@ -59,21 +60,39 @@
     for (int i = layer + 1; i < [stackedViews count]; i++) {
         UIViewController *vc = [stackedViews objectAtIndex:i];
         UIView *subView = vc.view;
-        x = MAX(x - kMinWidth, 0);
+//        adjusting by compressed spacing if we can, otherwise use our min width as a space
+        int nextX = x - MIN(kMinWidth, (self.view.frame.size.width - x) / ((float)layer + 1) );
+        x = MAX(nextX, 0);
         if (subView.frame.origin.x > x) {
             subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
+        }
+    }
+    
+//        check to see if we need to decompress views to our right
+    if (style & JPSTYLE_COMPRESS_VIEWS) {
+        for (float i = layer - 1; i >= 0; i--) {
+            UIViewController *vc = [stackedViews objectAtIndex:i];
+            UIView *subView = vc.view;
+            //        calculate how much space is to our right, divide by the number of layers visible, use that as spacing
+            CGFloat spaceToTheRight = (self.view.frame.size.width - view.frame.origin.x);
+            CGFloat decompress = self.view.frame.size.width - ((spaceToTheRight/((float)layer + 1)) * ((float)i + 1));
+            CGFloat minWidth = self.view.frame.size.width - ((kMinWidth / (float)layer) * ((float)i + 1));
+            x = MAX(decompress, minWidth);
+            if (subView.frame.origin.x > x) {
+                subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
+            }
         }
     }
 }
 
 -(void)panning:(UIPanGestureRecognizer*)sender{
     CGPoint translatedPoint = [sender translationInView:self.view];
-    int layer = sender.view.tag;
+    __block int layer = sender.view.tag;
     UIView *view = [(UIViewController*)[stackedViews objectAtIndex:layer] view];
     if ([sender state] == UIGestureRecognizerStateBegan) {
         firstX = translatedPoint.x;
     } else if ([sender state] == UIGestureRecognizerStateCancelled || [sender state] == UIGestureRecognizerStateEnded) {
-        CGFloat xOffset = self.view.frame.size.width - (layer + 1) * kMinWidth;
+        CGFloat xOffset = self.view.frame.size.width - kMinWidth * (style & JPSTYLE_COMPRESS_VIEWS ? 1 : (layer + 1));
 //        see if we end this shortly after our swipe gesture
         if ( (swipeGestureEndedTime && [[NSDate date] timeIntervalSinceDate:swipeGestureEndedTime] <= kSwipeMarginTime) || snapsToSides) {
             bool goRight = NO;
@@ -86,18 +105,22 @@
 //            go right or left
             if (goRight) {
                 [UIView animateWithDuration:kAnimationDuration animations:^{
-                    [self shiftViewToTheRight:sender.view xOffset:xOffset];
+                    [self shiftViewToTheRight:view xOffset:xOffset];
+                    UIView *leftview = [(UIViewController*)[stackedViews objectAtIndex:layer+1] view];
+                    [self shiftViewToTheLeft:leftview xOffset:0];
                 }];
             } else {
 //                swipe left!
                 [UIView animateWithDuration:kAnimationDuration animations:^{
-                    [self shiftViewToTheLeft:sender.view xOffset:0];
+                    [self shiftViewToTheLeft:view xOffset:0];
                 }];
             }
         }
     } else {
         CGRect origFrame = view.frame;
-        CGFloat xOffset = MAX(0, MIN(origFrame.origin.x + translatedPoint.x - firstX, self.view.frame.size.width - ((layer + 1) * kMinWidth) ));
+        CGFloat adjustedX = origFrame.origin.x + translatedPoint.x - firstX;
+        CGFloat maxRight = MAX(origFrame.origin.x, self.view.frame.size.width - kMinWidth * (style & JPSTYLE_COMPRESS_VIEWS ? 1 : (layer + 1)));
+        CGFloat xOffset = MAX(0, MIN(maxRight, adjustedX));
 //        adjust all other views
         if (translatedPoint.x - firstX > 0) {
 //            we are shifting to the right
@@ -111,6 +134,7 @@
 }
 
 -(void)swiping:(UISwipeGestureRecognizer*)sender{
+//    store our swiping direction since the UIPanGestureRecognizer seems to override
     swipeDirection = sender.direction;
     swipeGestureEndedTime = [NSDate date];
 }
