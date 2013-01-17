@@ -2,6 +2,18 @@
 
 Stack multiple view controllers that can be moved around.  Both Swiping and panning gestures work (only left/right).
 
+## Customizing
+There are a few things you can do to tweak how JPStackedViewController acts.  If you want each view to "dock" to the left/right, call
+
+	[stacky setSnapsToSides:YES];
+	
+JPStackedViewController also supports interaction styles.  Currently there are only two `JPSTYLE_TOUCH_VIEW_ANYWHERE` and `JPSTYLE_TOUCH_NAV_ONLY`.  If you call  
+	
+	[stacky setStyle:JPSTYLE_TOUCH_NAV_ONLY];
+	
+the views will only be able to be adjusted when you tap and drag on a UINavigationBar. **Note: if you set this style and don't use UINavigationControllers, your users won't be able to reveal the views in the back.**
+    
+
 ## Example Code
 
 	UIViewController *vc = [[UIViewController alloc] init];
