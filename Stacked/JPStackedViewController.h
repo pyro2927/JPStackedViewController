@@ -8,15 +8,22 @@
 
 #import <UIKit/UIKit.h>
 
+typedef enum {
+    JPSTYLE_TOUCH_VIEW_ANYWHERE = 0,
+    JPSTYLE_TOUCH_NAV_ONLY
+} JPSTYLE_TYPE;
+
 @interface JPStackedViewController : UIViewController<UIGestureRecognizerDelegate>{
     NSMutableArray *stackedViews;
     CGFloat firstX;
     NSDate *swipeGestureEndedTime;
     UISwipeGestureRecognizerDirection swipeDirection;
     bool snapsToSides;
+    int style;
 }
 
 @property bool snapsToSides;
+@property int style;
 
 - (id)initWithViewControllers:(NSArray*)viewControllers;
 
