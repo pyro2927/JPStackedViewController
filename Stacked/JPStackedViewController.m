@@ -224,6 +224,10 @@
                 [vc.view addGestureRecognizer:panner];
                 [vc.view addGestureRecognizer:swiper];
                 [vc.view addGestureRecognizer:leftswiper];
+                if (style & JPSTYLE_VIEW_HOP) {
+                    UITapGestureRecognizer *tapper = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hop:)];
+                    [vc.view addGestureRecognizer:tapper];
+                }
             }
         }
     }
