@@ -17,7 +17,6 @@
 @end
 
 @implementation JPStackedViewController
-@synthesize snapsToSides;
 @synthesize style;
 
 //slide our views to show the one with the passed index
@@ -94,7 +93,7 @@
     } else if ([sender state] == UIGestureRecognizerStateCancelled || [sender state] == UIGestureRecognizerStateEnded) {
         CGFloat xOffset = self.view.frame.size.width - kMinWidth * (style & JPSTYLE_COMPRESS_VIEWS ? 1 : (layer + 1));
 //        see if we end this shortly after our swipe gesture
-        if ( (swipeGestureEndedTime && [[NSDate date] timeIntervalSinceDate:swipeGestureEndedTime] <= kSwipeMarginTime) || snapsToSides) {
+        if ( (swipeGestureEndedTime && [[NSDate date] timeIntervalSinceDate:swipeGestureEndedTime] <= kSwipeMarginTime) || (style & JPSTYLE_SNAPS_TO_SIDES)) {
             bool goRight = NO;
             if (swipeGestureEndedTime && [[NSDate date] timeIntervalSinceDate:swipeGestureEndedTime] <= kSwipeMarginTime) {
                 goRight = (swipeDirection == UISwipeGestureRecognizerDirectionRight);
@@ -199,8 +198,6 @@
                 ((UINavigationController*)vc).navigationBar.tag = vc.view.tag;
             }
         }
-        
-        self.snapsToSides = NO;
     }
     return self;
 }
