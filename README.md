@@ -1,18 +1,28 @@
-## JPStackedViewController
-
+# JPStackedViewController
 Stack multiple view controllers that can be moved around.  Both Swiping and panning gestures work (only left/right).
 
-## Customizing
-There are a few things you can do to tweak how JPStackedViewController acts.  If you want each view to "dock" to the left/right, call
+## Customizing/Styling
+JPStackedViewController can have different styles/effects added to it via bitflags.  Below is a (hopefully) up to date listing of what is available.  You can set style flags like
 
-	[stacky setSnapsToSides:YES];
-	
-JPStackedViewController also supports interaction styles.  Currently there are only two `JPSTYLE_TOUCH_VIEW_ANYWHERE` and `JPSTYLE_TOUCH_NAV_ONLY`.  If you call  
-	
-	[stacky setStyle:JPSTYLE_TOUCH_NAV_ONLY];
-	
-the views will only be able to be adjusted when you tap and drag on a UINavigationBar. **Note: if you set this style and don't use UINavigationControllers, your users won't be able to reveal the views in the back.**
+	[stacky setStyle:JPSTYLE_TOUCH_NAV_ONLY | JPSTYLE_COMPRESS_VIEWS | JPSTYLE_VIEW_HOP];
+
+#### JPSTYLE_TOUCH_VIEW_ANYWHERE
+This is the default (`0`) style.  Views can be adjusted by tapping and sliding anywhere on them. (shown in the gif below)
+
+#### JPSTYLE_TOUCH_NAV_ONLY
+Views will only be able to be adjusted when you tap and drag on a UINavigationBar. **Note: if you set this style and don't use UINavigationControllers, your users won't be able to reveal the views in the back.**
+
+#### JPSTYLE_VIEW_HOP
+Views will "hop" when the far left side is tapped, similar to the iOS camera being accessed from the lock screen.
+
+#### JPSTYLE_IGNORE_BUTTONS
+Gestures will be ignored when the are performed on top of UIButtons.
+
+#### JPSTYLE_COMPRESS_VIEWS
+When views are stacked on the righthand side of the screen, they will be compressed so their their combined visible space will be what one view to the right would be.
     
+#### JPSTYLE_SNAPS_TO_SIDES
+When a view is released, it (and the others) will nap to the left/right side of the screen, depending on what is closer.
 
 ## Example Code
 
@@ -39,6 +49,11 @@ the views will only be able to be adjusted when you tap and drag on a UINavigati
     
     self.window.rootViewController = stacky;
 
-## Picture
+## Pictures
+In action:
 
 ![](https://raw.github.com/pyro2927/JPStackedViewController/master/stacked.gif)
+
+Compressed:
+
+![](https://raw.github.com/pyro2927/JPStackedViewController/master/compressed.png)
