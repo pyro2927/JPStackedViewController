@@ -40,6 +40,7 @@
     CGRect origFrame = view.frame;
     view.frame = CGRectMake(x, origFrame.origin.y, origFrame.size.width, origFrame.size.height);
 //    loop over views that are to the right of this one
+    /*
     for (int i = layer - 1; i >= 0; i--) {
         UIViewController *vc = [stackedViews objectAtIndex:i];
         UIView *subView = vc.view;
@@ -48,7 +49,7 @@
         if (subView.frame.origin.x < x) {
             subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
         }
-    }
+    }*/
 }
 
 -(void)shiftViewToTheLeft:(UIView*)view xOffset:(CGFloat)x{
@@ -56,6 +57,7 @@
     view = [(UIViewController*)[stackedViews objectAtIndex:layer] view];
     CGRect origFrame = view.frame;
     view.frame = CGRectMake(x, origFrame.origin.y, origFrame.size.width, origFrame.size.height);
+    /*
     for (int i = layer + 1; i < [stackedViews count]; i++) {
         UIViewController *vc = [stackedViews objectAtIndex:i];
         UIView *subView = vc.view;
@@ -81,7 +83,7 @@
                 subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
             }
         }
-    }
+    }*/
 }
 
 -(void)panning:(UIPanGestureRecognizer*)sender{
@@ -131,46 +133,43 @@
         firstX = translatedPoint.x;
     }
 }
-
 -(void)swiping:(UISwipeGestureRecognizer*)sender{
 //    store our swiping direction since the UIPanGestureRecognizer seems to override
     swipeDirection = sender.direction;
     swipeGestureEndedTime = [NSDate date];
 }
 
+-(void)shiftView:(UIView*)view byDelta:(int)delta{
+    int x = delta + view.frame.origin.x;
+    if (delta > 0) {
+        [self shiftViewToTheRight:view xOffset:x];
+    } else {
+        [self shiftViewToTheLeft:view xOffset:x];
+    }
+}
+
 -(void)hop:(UITapGestureRecognizer*)tapper{
     CGPoint translatedPoint = [tapper locationInView:tapper.view];
     int layer = tapper.view.tag;
     __block UIView *view = [(UIViewController*)[stackedViews objectAtIndex:layer] view];
-//    see if we should ignore this
-    if (translatedPoint.x > 50 || ( (JPSTYLE_VIEW_HOP_LEFT & style) && view.frame.origin.x > 0 ) ) {
-        return;
-    }
+    __block CGRect frame = view.frame;
+    __block int mod = (frame.origin.x == 0 ? 1 : -1 );
 //    slide out
     [UIView animateWithDuration:0.15f delay:0.0f options:UIViewAnimationOptionCurveEaseOut animations:^{
-        CGRect frame = view.frame;
-        frame.origin.x += kHopWidth;
-        view.frame = frame;
+        [self shiftView:view byDelta:kHopWidth * mod];
     } completion:^(BOOL finished) {
 //        now slide back in
         [UIView animateWithDuration:0.15f delay:0.05f options:UIViewAnimationOptionCurveEaseIn animations:^{
-            CGRect frame = view.frame;
-            frame.origin.x = 0;
-            view.frame = frame;
+            [self shiftView:view byDelta:kHopWidth * mod * -1];
         } completion:^(BOOL finished) {
 //            now we have a baby hop
             [UIView animateWithDuration:0.1f delay:0.0f options:UIViewAnimationOptionCurveEaseOut animations:^{
-                CGRect frame = view.frame;
-                frame.origin.x += kHopWidth/3;
-                view.frame = frame;
+                [self shiftView:view byDelta:kHopWidth/3 * mod];
             } completion:^(BOOL finished) {
                 //        now slide back in for the final time
                 [UIView animateWithDuration:0.1f delay:0.0f options:UIViewAnimationOptionCurveEaseIn animations:^{
-                    CGRect frame = view.frame;
-                    frame.origin.x = 0;
-                    view.frame = frame;
-                } completion:^(BOOL finished) {
-                }];
+                    [self shiftView:view byDelta:kHopWidth/3 * mod * -1];
+                } completion:nil];
             }];
         }];
     }];
@@ -189,6 +188,56 @@
     return YES;
 }
 
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context{
+    CGRect newFrame = [[change objectForKey:NSKeyValueChangeNewKey] CGRectValue];
+    CGRect oldFrame = [[change objectForKey:NSKeyValueChangeOldKey] CGRectValue];
+    NSLog(@"View %i's frame changed to x: %f", [object tag], newFrame.origin.x);
+    int layer = [object tag];
+    int x = newFrame.origin.x;
+    
+//    if we are moving to the left (negative delta), we are actually going UP our layer arra
+    int direction = (newFrame.origin.x - oldFrame.origin.x >= 0 ? 1 : -1 );
+    
+    for (int i = layer - direction; 0 <= i && i < [stackedViews count] - 1; i -= direction) {
+        UIViewController *vc = [stackedViews objectAtIndex:i];
+        UIView *subView = vc.view;
+        
+//        adjusting by compressed spacing if we can, otherwise use our min width as a space
+//        direction > 0 means we are moving RIGHT
+        if (direction > 0) {
+//        calculate how much space is to our right, divide by the number of layers visible, use that as spacing
+            x+= (style & JPSTYLE_COMPRESS_VIEWS ? MIN((self.view.frame.size.width - newFrame.origin.x)/(layer + 1), kMinWidth) : kMinWidth);
+            if (subView.frame.origin.x < x) {
+                subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
+            }
+//            else we are moving LEFT
+        } else {
+//        adjusting by compressed spacing if we can, otherwise use our min width as a space
+            int nextX = x - MIN(kMinWidth, (self.view.frame.size.width - x) / ((float)layer + 1) );
+            x = MAX(nextX, 0);
+            if (subView.frame.origin.x > x) {
+                subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
+            }
+        }
+    }
+    
+//    if we are doing compression, we also want to traverse our layer list the other way
+    if (style & JPSTYLE_COMPRESS_VIEWS) {
+        for (int i = layer + direction; 0 <= i && i < [stackedViews count] - 1; i += direction) {
+            UIViewController *vc = [stackedViews objectAtIndex:i];
+            UIView *subView = vc.view;
+            //        calculate how much space is to our right, divide by the number of layers visible, use that as spacing
+            CGFloat spaceToTheRight = (self.view.frame.size.width - newFrame.origin.x);
+            CGFloat decompress = self.view.frame.size.width - ((spaceToTheRight/((float)layer + 1)) * ((float)i + 1));
+            CGFloat minWidth = self.view.frame.size.width - ((kMinWidth / (float)layer) * ((float)i + 1));
+            x = MAX(decompress, minWidth);
+            if (subView.frame.origin.x > x) {
+                subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
+            }
+        }
+    }
+}
+
 - (id)initWithViewControllers:(NSArray*)viewControllers{
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
@@ -196,6 +245,7 @@
         self.view.backgroundColor = [UIColor blueColor];
         stackedViews = [[NSMutableArray alloc] initWithArray:viewControllers];
         for (UIViewController *vc in viewControllers) {
+            [vc.view addObserver:self forKeyPath:@"frame" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
             [self.view addSubview:vc.view];
             [self.view sendSubviewToBack:vc.view];
             vc.view.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
