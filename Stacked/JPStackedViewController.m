@@ -140,11 +140,12 @@
 
 -(void)hop:(UITapGestureRecognizer*)tapper{
     CGPoint translatedPoint = [tapper locationInView:tapper.view];
-    if (translatedPoint.x > 50) {
-        return;
-    }
     int layer = tapper.view.tag;
     __block UIView *view = [(UIViewController*)[stackedViews objectAtIndex:layer] view];
+//    see if we should ignore this
+    if (translatedPoint.x > 50 || ( (JPSTYLE_VIEW_HOP_LEFT & style) && view.frame.origin.x > 0 ) ) {
+        return;
+    }
 //    slide out
     [UIView animateWithDuration:0.15f delay:0.0f options:UIViewAnimationOptionCurveEaseOut animations:^{
         CGRect frame = view.frame;
@@ -236,7 +237,7 @@
                     [((UINavigationController*)vc).navigationBar addGestureRecognizer:swiper];
                     [((UINavigationController*)vc).navigationBar addGestureRecognizer:leftswiper];
 //                    see if the hop animation should be added
-                    if (style & JPSTYLE_VIEW_HOP) {
+                    if (style & JPSTYLE_VIEW_HOP || style & JPSTYLE_VIEW_HOP_LEFT) {
                         UITapGestureRecognizer *tapper = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hop:)];
                         [((UINavigationController*)vc).navigationBar addGestureRecognizer:tapper];
                     }
@@ -245,7 +246,7 @@
                 [vc.view addGestureRecognizer:panner];
                 [vc.view addGestureRecognizer:swiper];
                 [vc.view addGestureRecognizer:leftswiper];
-                if (style & JPSTYLE_VIEW_HOP) {
+                if (style & JPSTYLE_VIEW_HOP || style & JPSTYLE_VIEW_HOP_LEFT) {
                     UITapGestureRecognizer *tapper = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hop:)];
                     [vc.view addGestureRecognizer:tapper];
                 }
