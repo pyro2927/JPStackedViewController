@@ -178,7 +178,12 @@
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
     // Disallow recognition of tap gestures in the button.
-    if ([touch.view isKindOfClass:[UIButton class]] && (style & JPSTYLE_IGNORE_BUTTONS)) {
+    if ([touch.view isKindOfClass:[UIButton class]]) {
+        NSString *reqSysVer = @"6.0";
+        NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
+        if ([gestureRecognizer isKindOfClass:[UITapGestureRecognizer class]] && !([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending)) {
+            [(UIButton*)touch.view sendActionsForControlEvents:UIControlEventTouchUpInside];
+        }
         return NO;
     }
     return YES;
@@ -237,7 +242,7 @@
                     [((UINavigationController*)vc).navigationBar addGestureRecognizer:swiper];
                     [((UINavigationController*)vc).navigationBar addGestureRecognizer:leftswiper];
 //                    see if the hop animation should be added
-                    if (style & JPSTYLE_VIEW_HOP || style & JPSTYLE_VIEW_HOP_LEFT) {
+                    if ((style & JPSTYLE_VIEW_HOP) == JPSTYLE_VIEW_HOP || (style & JPSTYLE_VIEW_HOP_LEFT) == JPSTYLE_VIEW_HOP_LEFT) {
                         UITapGestureRecognizer *tapper = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hop:)];
                         [((UINavigationController*)vc).navigationBar addGestureRecognizer:tapper];
                     }
@@ -246,7 +251,7 @@
                 [vc.view addGestureRecognizer:panner];
                 [vc.view addGestureRecognizer:swiper];
                 [vc.view addGestureRecognizer:leftswiper];
-                if (style & JPSTYLE_VIEW_HOP || style & JPSTYLE_VIEW_HOP_LEFT) {
+                if ((style & JPSTYLE_VIEW_HOP) == JPSTYLE_VIEW_HOP || (style & JPSTYLE_VIEW_HOP_LEFT) == JPSTYLE_VIEW_HOP_LEFT) {
                     UITapGestureRecognizer *tapper = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hop:)];
                     [vc.view addGestureRecognizer:tapper];
                 }
