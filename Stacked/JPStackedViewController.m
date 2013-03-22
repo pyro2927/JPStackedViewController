@@ -19,6 +19,10 @@
 @implementation JPStackedViewController
 @synthesize style;
 
+-(CGFloat)gutterWidthForLayer:(int)layer{
+    return kMinWidth * ( style & JPSTYLE_COMPRESS_VIEWS ? 1 : (layer + 1) );
+}
+
 //slide our views to show the one with the passed index
 -(void)openToIndex:(int)viewIndex{
     CGFloat width = self.view.frame.size.width;
@@ -32,7 +36,8 @@
     [UIView animateWithDuration:kAnimationDuration animations:^{
         [self setView:view xOffset:MAX(maxLeft, 0)];
         if (viewIndex > 0) {
-            CGFloat xOffset = width - outerIndex-- * kMinWidth;
+            CGFloat rightGutter = [self gutterWidthForLayer:--outerIndex];
+            CGFloat xOffset = width - rightGutter;
             UIView *view2 = [(UIViewController*)[stackedViews objectAtIndex:outerIndex] view];
             [self setView:view2 xOffset:xOffset];
         }
@@ -55,7 +60,9 @@
         //check on our min/max limits
         CGRect origFrame = view.frame;
         CGFloat adjustedX = origFrame.origin.x + translatedPoint.x - firstX;
-        CGFloat maxRight = self.view.frame.size.width - kMinWidth * (layer + 1);
+        //right gutter differs depending on whether or not we crunch
+        CGFloat rightGutter = [self gutterWidthForLayer:layer];
+        CGFloat maxRight = self.view.frame.size.width - rightGutter;
         CGFloat xOffset = MAX(0, MIN(MAX(origFrame.origin.x, maxRight), adjustedX));
         //see if we're done moving
         if ([sender state] == UIGestureRecognizerStateCancelled || [sender state] == UIGestureRecognizerStateEnded) {
@@ -124,7 +131,6 @@
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context{
     CGRect newFrame = [[change objectForKey:NSKeyValueChangeNewKey] CGRectValue];
     CGRect oldFrame = [[change objectForKey:NSKeyValueChangeOldKey] CGRectValue];
-    NSLog(@"View %i's frame changed to x: %f", [object tag], newFrame.origin.x);
     int layer = [object tag];
     int x = newFrame.origin.x;
     
@@ -138,7 +144,12 @@
         int belowX = belowController.view.frame.origin.x;
         int currentSpacing = x - belowX;
         if (goingLeft) {
-            currentSpacing = MAX(kMinWidth, currentSpacing);
+            //if we're going left we need to make sure we decompress first
+            int min = kMinWidth;
+            if (style & JPSTYLE_COMPRESS_VIEWS) {
+                min = MIN(self.view.frame.size.width - x, min);
+            }
+            currentSpacing = MAX(min, currentSpacing);
         }
         int spacer = MIN( MAX(0, currentSpacing ), self.view.frame.size.width - kMinWidth  * 2);
         //don't move it if we don't need to
@@ -148,6 +159,7 @@
         }
     }
     
+    //lower layer numbers goes to the right
     if (layer > 0) {
         //we MIGHT need to move the layer above us!
         UIViewController *aboveController = [stackedViews objectAtIndex:layer - 1];
@@ -156,7 +168,11 @@
         int spacer = MIN( MAX( (goingLeft ? 0 : kMinWidth) , aboveX - x), self.view.frame.size.width - kMinWidth  * 2);
         //don't move it if we don't need to
         if (aboveX != x + spacer) {
-            [self setView:aboveController.view xOffset:x + spacer];
+            //min a crunched width
+            //average between layer above and whole width
+            //mutliply our compressed space by 2/3, 4/3, 1/2, etc
+            CGFloat compressedRight = (self.view.frame.size.width - x) * (CGFloat)((float)layer / (float)(layer + 1) );
+            [self setView:aboveController.view xOffset:MIN(x + spacer,  self.view.frame.size.width - compressedRight)];
         }
     }
 }
