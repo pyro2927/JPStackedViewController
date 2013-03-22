@@ -80,6 +80,7 @@
     [self setView:view xOffset:x];
 }
 
+//method to hop a view
 -(void)hop:(UITapGestureRecognizer*)tapper{
     CGPoint translatedPoint = [tapper locationInView:tapper.view];
     int layer = tapper.view.tag;
