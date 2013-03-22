@@ -15,7 +15,8 @@ typedef enum {
     JPSTYLE_VIEW_HOP_LEFT,
     JPSTYLE_IGNORE_BUTTONS,
     JPSTYLE_COMPRESS_VIEWS,
-    JPSTYLE_SNAPS_TO_SIDES
+    JPSTYLE_SNAPS_TO_SIDES,
+    JPSTYLE_TUG
 } JPSTYLE_TYPE;
 
 @interface JPStackedViewController : UIViewController<UIGestureRecognizerDelegate>{

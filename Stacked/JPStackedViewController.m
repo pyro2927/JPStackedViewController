@@ -49,6 +49,17 @@
             subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
         }
     }
+    /*
+    if ((style & JPSTYLE_TUG) == JPSTYLE_TUG && layer + 2 < [stackedViews count] && false) {
+        UIViewController *vc = [stackedViews objectAtIndex:layer+1];
+        UIView *subView = vc.view;
+        //        calculate how much space is to our right, divide by the number of layers visible, use that as spacing
+        CGFloat spaceToTheLeft = (view.frame.origin.x - subView.frame.origin.x);
+        spaceToTheLeft = MIN(spaceToTheLeft, self.view.frame.size.width - kMinWidth*2);
+        CGRect frame = subView.frame;
+        frame.origin.x = view.frame.origin.x - spaceToTheLeft;
+        subView.frame = frame;
+    }*/
 }
 
 -(void)shiftViewToTheLeft:(UIView*)view xOffset:(CGFloat)x{
@@ -105,8 +116,9 @@
             if (goRight) {
                 [UIView animateWithDuration:kAnimationDuration animations:^{
                     [self shiftViewToTheRight:view xOffset:xOffset];
-                    UIView *leftview = [(UIViewController*)[stackedViews objectAtIndex:layer+1] view];
-                    [self shiftViewToTheLeft:leftview xOffset:0];
+                    UIView *leftview = [(UIViewController*)[stackedViews objectAtIndex:++layer] view];
+                    int x = (layer + 1 < [stackedViews count] ? kMinWidth : 0 );
+                    [self shiftViewToTheLeft:leftview xOffset:x];
                 }];
             } else {
 //                swipe left!
@@ -176,6 +188,10 @@
     }];
 }
 
+- (NSUInteger)supportedInterfaceOrientations{
+    return UIInterfaceOrientationMaskPortrait;
+}
+
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
     // Disallow recognition of tap gestures in the button.
     if ([touch.view isKindOfClass:[UIButton class]] && (style & JPSTYLE_IGNORE_BUTTONS)) {
@@ -237,7 +253,7 @@
                     [((UINavigationController*)vc).navigationBar addGestureRecognizer:swiper];
                     [((UINavigationController*)vc).navigationBar addGestureRecognizer:leftswiper];
 //                    see if the hop animation should be added
-                    if (style & JPSTYLE_VIEW_HOP || style & JPSTYLE_VIEW_HOP_LEFT) {
+                    if ((style & JPSTYLE_VIEW_HOP) == JPSTYLE_VIEW_HOP) {
                         UITapGestureRecognizer *tapper = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hop:)];
                         [((UINavigationController*)vc).navigationBar addGestureRecognizer:tapper];
                     }
@@ -246,7 +262,7 @@
                 [vc.view addGestureRecognizer:panner];
                 [vc.view addGestureRecognizer:swiper];
                 [vc.view addGestureRecognizer:leftswiper];
-                if (style & JPSTYLE_VIEW_HOP || style & JPSTYLE_VIEW_HOP_LEFT) {
+                if ((style & JPSTYLE_VIEW_HOP) == JPSTYLE_VIEW_HOP) {
                     UITapGestureRecognizer *tapper = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hop:)];
                     [vc.view addGestureRecognizer:tapper];
                 }
