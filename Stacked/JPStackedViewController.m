@@ -24,113 +24,49 @@
     CGFloat width = self.view.frame.size.width;
     UIView *view = [(UIViewController*)[stackedViews objectAtIndex:viewIndex] view];
     __block int outerIndex = viewIndex;
+    //calculate maxLeft
+    int maxLeft = kMinWidth - kMinWidth * (outerIndex - 1);
+    if (outerIndex == 0) {
+        maxLeft = 0;
+    }
     [UIView animateWithDuration:kAnimationDuration animations:^{
-        [self shiftViewToTheLeft:view xOffset:0];
+        [self setView:view xOffset:MAX(maxLeft, 0)];
         if (viewIndex > 0) {
             CGFloat xOffset = width - outerIndex-- * kMinWidth;
             UIView *view2 = [(UIViewController*)[stackedViews objectAtIndex:outerIndex] view];
-            [self shiftViewToTheRight:view2 xOffset:xOffset];
+            [self setView:view2 xOffset:xOffset];
         }
     }];
 }
 
--(void)shiftViewToTheRight:(UIView*)view xOffset:(CGFloat)x{
-    int layer = view.tag;
-    view = [(UIViewController*)[stackedViews objectAtIndex:layer] view];
+-(void)setView:(UIView *)view xOffset:(CGFloat)x{
     CGRect origFrame = view.frame;
     view.frame = CGRectMake(x, origFrame.origin.y, origFrame.size.width, origFrame.size.height);
-//    loop over views that are to the right of this one
-    /*
-    for (int i = layer - 1; i >= 0; i--) {
-        UIViewController *vc = [stackedViews objectAtIndex:i];
-        UIView *subView = vc.view;
-//        calculate how much space is to our right, divide by the number of layers visible, use that as spacing
-        x+= (style & JPSTYLE_COMPRESS_VIEWS ? MIN((self.view.frame.size.width - view.frame.origin.x)/(layer + 1), kMinWidth) : kMinWidth);
-        if (subView.frame.origin.x < x) {
-            subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
-        }
-    }*/
-}
-
--(void)shiftViewToTheLeft:(UIView*)view xOffset:(CGFloat)x{
-    int layer = view.tag;
-    view = [(UIViewController*)[stackedViews objectAtIndex:layer] view];
-    CGRect origFrame = view.frame;
-    view.frame = CGRectMake(x, origFrame.origin.y, origFrame.size.width, origFrame.size.height);
-    /*
-    for (int i = layer + 1; i < [stackedViews count]; i++) {
-        UIViewController *vc = [stackedViews objectAtIndex:i];
-        UIView *subView = vc.view;
-//        adjusting by compressed spacing if we can, otherwise use our min width as a space
-        int nextX = x - MIN(kMinWidth, (self.view.frame.size.width - x) / ((float)layer + 1) );
-        x = MAX(nextX, 0);
-        if (subView.frame.origin.x > x) {
-            subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
-        }
-    }
-    
-//        check to see if we need to decompress views to our right
-    if (style & JPSTYLE_COMPRESS_VIEWS) {
-        for (float i = layer - 1; i >= 0; i--) {
-            UIViewController *vc = [stackedViews objectAtIndex:i];
-            UIView *subView = vc.view;
-            //        calculate how much space is to our right, divide by the number of layers visible, use that as spacing
-            CGFloat spaceToTheRight = (self.view.frame.size.width - view.frame.origin.x);
-            CGFloat decompress = self.view.frame.size.width - ((spaceToTheRight/((float)layer + 1)) * ((float)i + 1));
-            CGFloat minWidth = self.view.frame.size.width - ((kMinWidth / (float)layer) * ((float)i + 1));
-            x = MAX(decompress, minWidth);
-            if (subView.frame.origin.x > x) {
-                subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
-            }
-        }
-    }*/
 }
 
 -(void)panning:(UIPanGestureRecognizer*)sender{
     CGPoint translatedPoint = [sender translationInView:self.view];
     __block int layer = sender.view.tag;
     UIView *view = [(UIViewController*)[stackedViews objectAtIndex:layer] view];
+    
     if ([sender state] == UIGestureRecognizerStateBegan) {
         firstX = translatedPoint.x;
-    } else if ([sender state] == UIGestureRecognizerStateCancelled || [sender state] == UIGestureRecognizerStateEnded) {
-        CGFloat xOffset = self.view.frame.size.width - kMinWidth * (style & JPSTYLE_COMPRESS_VIEWS ? 1 : (layer + 1));
-//        see if we end this shortly after our swipe gesture
-        if ( (swipeGestureEndedTime && [[NSDate date] timeIntervalSinceDate:swipeGestureEndedTime] <= kSwipeMarginTime) || (style & JPSTYLE_SNAPS_TO_SIDES)) {
-            bool goRight = NO;
-            if (swipeGestureEndedTime && [[NSDate date] timeIntervalSinceDate:swipeGestureEndedTime] <= kSwipeMarginTime) {
-                goRight = (swipeDirection == UISwipeGestureRecognizerDirectionRight);
-            } else {
-                CGFloat currentX = view.frame.origin.x;
-                goRight = (currentX > xOffset - currentX);
-            }
-//            go right or left
-            if (goRight) {
-                [UIView animateWithDuration:kAnimationDuration animations:^{
-                    [self shiftViewToTheRight:view xOffset:xOffset];
-                    UIView *leftview = [(UIViewController*)[stackedViews objectAtIndex:layer+1] view];
-                    [self shiftViewToTheLeft:leftview xOffset:0];
-                }];
-            } else {
-//                swipe left!
-                [UIView animateWithDuration:kAnimationDuration animations:^{
-                    [self shiftViewToTheLeft:view xOffset:0];
-                }];
-            }
-        }
     } else {
+        //check on our min/max limits
         CGRect origFrame = view.frame;
         CGFloat adjustedX = origFrame.origin.x + translatedPoint.x - firstX;
-        CGFloat maxRight = MAX(origFrame.origin.x, self.view.frame.size.width - kMinWidth * (style & JPSTYLE_COMPRESS_VIEWS ? 1 : (layer + 1)));
-        CGFloat xOffset = MAX(0, MIN(maxRight, adjustedX));
-//        adjust all other views
-        if (translatedPoint.x - firstX > 0) {
-//            we are shifting to the right
-            [self shiftViewToTheRight:view xOffset:xOffset];
+        CGFloat maxRight = self.view.frame.size.width - kMinWidth * (layer + 1);
+        CGFloat xOffset = MAX(0, MIN(MAX(origFrame.origin.x, maxRight), adjustedX));
+        //see if we're done moving
+        if ([sender state] == UIGestureRecognizerStateCancelled || [sender state] == UIGestureRecognizerStateEnded) {
+            //done moving, snap to a side
+            bool goLeft = origFrame.origin.x <= self.view.frame.size.width / 2;
+            [self openToIndex:layer + (goLeft ? 0 : 1 )];
         } else {
-//            we are moving to the left
-            [self shiftViewToTheLeft:view xOffset:xOffset];
+            //still moving
+            [self setView:view xOffset:xOffset];
+            firstX = translatedPoint.x;
         }
-        firstX = translatedPoint.x;
     }
 }
 -(void)swiping:(UISwipeGestureRecognizer*)sender{
@@ -141,11 +77,7 @@
 
 -(void)shiftView:(UIView*)view byDelta:(int)delta{
     int x = delta + view.frame.origin.x;
-    if (delta > 0) {
-        [self shiftViewToTheRight:view xOffset:x];
-    } else {
-        [self shiftViewToTheLeft:view xOffset:x];
-    }
+    [self setView:view xOffset:x];
 }
 
 -(void)hop:(UITapGestureRecognizer*)tapper{
@@ -195,45 +127,35 @@
     int layer = [object tag];
     int x = newFrame.origin.x;
     
-//    if we are moving to the left (negative delta), we are actually going UP our layer arra
-    int direction = (newFrame.origin.x - oldFrame.origin.x >= 0 ? 1 : -1 );
-    
-    for (int i = layer - direction; 0 <= i && i < [stackedViews count] - 1; i -= direction) {
-        UIViewController *vc = [stackedViews objectAtIndex:i];
-        UIView *subView = vc.view;
-        
-//        adjusting by compressed spacing if we can, otherwise use our min width as a space
-//        direction > 0 means we are moving RIGHT
-        if (direction > 0) {
-//        calculate how much space is to our right, divide by the number of layers visible, use that as spacing
-            x+= (style & JPSTYLE_COMPRESS_VIEWS ? MIN((self.view.frame.size.width - newFrame.origin.x)/(layer + 1), kMinWidth) : kMinWidth);
-            if (subView.frame.origin.x < x) {
-                subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
-            }
-//            else we are moving LEFT
-        } else {
-//        adjusting by compressed spacing if we can, otherwise use our min width as a space
-            int nextX = x - MIN(kMinWidth, (self.view.frame.size.width - x) / ((float)layer + 1) );
-            x = MAX(nextX, 0);
-            if (subView.frame.origin.x > x) {
-                subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
-            }
+    //if we are moving to the left (negative delta), we are actually going UP our layer arra
+    bool goingLeft = newFrame.origin.x < oldFrame.origin.x;
+    //we only need to move the controllers immediatly to the left/right
+    // - 2 so we don't move the very bottom view
+    if (layer < [stackedViews count] - 2) {
+        //we need to move the layer below us
+        UIViewController *belowController = [stackedViews objectAtIndex:layer + 1];
+        int belowX = belowController.view.frame.origin.x;
+        int currentSpacing = x - belowX;
+        if (goingLeft) {
+            currentSpacing = MAX(kMinWidth, currentSpacing);
+        }
+        int spacer = MIN( MAX(0, currentSpacing ), self.view.frame.size.width - kMinWidth  * 2);
+        //don't move it if we don't need to
+        if (belowX != MAX(x - spacer, 0)) {
+            //max with 0 to make sure we can't go past 0 on the left
+            [self setView:belowController.view xOffset:MAX(x - spacer, 0)];
         }
     }
     
-//    if we are doing compression, we also want to traverse our layer list the other way
-    if (style & JPSTYLE_COMPRESS_VIEWS) {
-        for (int i = layer + direction; 0 <= i && i < [stackedViews count] - 1; i += direction) {
-            UIViewController *vc = [stackedViews objectAtIndex:i];
-            UIView *subView = vc.view;
-            //        calculate how much space is to our right, divide by the number of layers visible, use that as spacing
-            CGFloat spaceToTheRight = (self.view.frame.size.width - newFrame.origin.x);
-            CGFloat decompress = self.view.frame.size.width - ((spaceToTheRight/((float)layer + 1)) * ((float)i + 1));
-            CGFloat minWidth = self.view.frame.size.width - ((kMinWidth / (float)layer) * ((float)i + 1));
-            x = MAX(decompress, minWidth);
-            if (subView.frame.origin.x > x) {
-                subView.frame = CGRectMake(x, subView.frame.origin.y, subView.frame.size.width, subView.frame.size.height);
-            }
+    if (layer > 0) {
+        //we MIGHT need to move the layer above us!
+        UIViewController *aboveController = [stackedViews objectAtIndex:layer - 1];
+        int aboveX = aboveController.view.frame.origin.x;
+        //if we are sliding left, don't enforce a minimum width of kMinWidth
+        int spacer = MIN( MAX( (goingLeft ? 0 : kMinWidth) , aboveX - x), self.view.frame.size.width - kMinWidth  * 2);
+        //don't move it if we don't need to
+        if (aboveX != x + spacer) {
+            [self setView:aboveController.view xOffset:x + spacer];
         }
     }
 }
@@ -245,7 +167,6 @@
         self.view.backgroundColor = [UIColor blueColor];
         stackedViews = [[NSMutableArray alloc] initWithArray:viewControllers];
         for (UIViewController *vc in viewControllers) {
-            [vc.view addObserver:self forKeyPath:@"frame" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
             [self.view addSubview:vc.view];
             [self.view sendSubviewToBack:vc.view];
             vc.view.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
@@ -285,28 +206,14 @@
             [leftswiper setDelegate:self];
             [leftswiper setDirection:UISwipeGestureRecognizerDirectionLeft];
             
-//            see if we should only allow them to touch our nav
-            if (style & JPSTYLE_TOUCH_NAV_ONLY){
-                if ([vc isKindOfClass:[UINavigationController class]]) {
-                    [((UINavigationController*)vc).navigationBar addGestureRecognizer:panner];
-                    [((UINavigationController*)vc).navigationBar addGestureRecognizer:swiper];
-                    [((UINavigationController*)vc).navigationBar addGestureRecognizer:leftswiper];
-//                    see if the hop animation should be added
-                    if ((style & JPSTYLE_VIEW_HOP) == JPSTYLE_VIEW_HOP || (style & JPSTYLE_VIEW_HOP_LEFT) == JPSTYLE_VIEW_HOP_LEFT) {
-                        UITapGestureRecognizer *tapper = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hop:)];
-                        [((UINavigationController*)vc).navigationBar addGestureRecognizer:tapper];
-                    }
-                }
-            } else {
-                [vc.view addGestureRecognizer:panner];
-                [vc.view addGestureRecognizer:swiper];
-                [vc.view addGestureRecognizer:leftswiper];
-                if ((style & JPSTYLE_VIEW_HOP) == JPSTYLE_VIEW_HOP || (style & JPSTYLE_VIEW_HOP_LEFT) == JPSTYLE_VIEW_HOP_LEFT) {
-                    UITapGestureRecognizer *tapper = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hop:)];
-                    [vc.view addGestureRecognizer:tapper];
-                }
+            if ([vc isKindOfClass:[UINavigationController class]]) {
+                [((UINavigationController*)vc).navigationBar addGestureRecognizer:panner];
+                [((UINavigationController*)vc).navigationBar addGestureRecognizer:swiper];
+                [((UINavigationController*)vc).navigationBar addGestureRecognizer:leftswiper];
             }
         }
+        //add our KVOs after view load
+        [vc.view addObserver:self forKeyPath:@"frame" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
     }
 }
 
