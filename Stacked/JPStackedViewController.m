@@ -143,6 +143,7 @@
         int currentSpacing = x - belowX;
         if (goingLeft) {
             //if we're going left we need to make sure we decompress first
+            //TODO: correctly decompress views above layer 2
             int min = kMinWidth;
             if (style & JPSTYLE_COMPRESS_VIEWS) {
                 min = MIN(self.view.frame.size.width - x, min);
