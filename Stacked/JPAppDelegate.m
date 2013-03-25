@@ -35,13 +35,20 @@
     UINavigationController *nav4 = [[UINavigationController alloc] initWithRootViewController:vc4];
     [nav4.navigationBar setTintColor:[UIColor greenColor]];
     
+    //add in toggle button
+    [vc.navigationItem setLeftBarButtonItem:[[UIBarButtonItem alloc] initWithTitle:@"Menu" style:UIBarButtonItemStyleBordered target:self action:@selector(toggle)]];
+    
     JPStackedViewController *stacky = [[JPStackedViewController alloc] initWithViewControllers:[NSArray arrayWithObjects:nav, nav2, nav3, nav4, nil]];
-    [stacky setStyle:JPSTYLE_TOUCH_NAV_ONLY | JPSTYLE_COMPRESS_VIEWS | JPSTYLE_VIEW_HOP];
+    [stacky setStyle:JPSTYLE_TOUCH_NAV_ONLY /*| JPSTYLE_COMPRESS_VIEWS*/ | JPSTYLE_VIEW_HOP];
     self.window.rootViewController = stacky;
     
     self.window.backgroundColor = [UIColor whiteColor];
     [self.window makeKeyAndVisible];
     return YES;
+}
+
+-(void)toggle{
+    [(JPStackedViewController*)self.window.rootViewController toggleViewAtIndex:0];
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application
