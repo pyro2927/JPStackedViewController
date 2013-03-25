@@ -29,5 +29,6 @@ typedef enum {
 
 - (id)initWithViewControllers:(NSArray*)viewControllers;
 - (void)openToIndex:(int)viewIndex;
+- (void)toggleViewAtIndex:(int)indexToToggle;
 
 @end

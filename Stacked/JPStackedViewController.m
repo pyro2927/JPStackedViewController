@@ -23,6 +23,19 @@
     return kMinWidth * ( style & JPSTYLE_COMPRESS_VIEWS ? 1 : (layer + 1) );
 }
 
+-(void)toggleViewAtIndex:(int)indexToToggle{
+    CGFloat width = self.view.frame.size.width;
+    UIView *view = [(UIViewController*)[stackedViews objectAtIndex:indexToToggle] view];
+    //check for current view state
+    if (view.frame.origin.x <= width / 2) {
+        [UIView animateWithDuration:kAnimationDuration animations:^{
+            [self setView:view xOffset:width - [self gutterWidthForLayer:indexToToggle]];
+        }];
+    } else {
+        [self openToIndex:indexToToggle];
+    }
+}
+
 //slide our views to show the one with the passed index
 -(void)openToIndex:(int)viewIndex{
     CGFloat width = self.view.frame.size.width;
@@ -64,8 +77,8 @@
         CGFloat rightGutter = [self gutterWidthForLayer:layer];
         CGFloat maxRight = self.view.frame.size.width - rightGutter;
         CGFloat xOffset = MAX(0, MIN(MAX(origFrame.origin.x, maxRight), adjustedX));
-        //see if we're done moving
-        if ([sender state] == UIGestureRecognizerStateCancelled || [sender state] == UIGestureRecognizerStateEnded) {
+        //see if we're done moving, and if we should snap to a side
+        if ( ([sender state] == UIGestureRecognizerStateCancelled || [sender state] == UIGestureRecognizerStateEnded) ) {
             //done moving, snap to a side
             bool goLeft = origFrame.origin.x <= self.view.frame.size.width / 2;
             [self openToIndex:layer + (goLeft ? 0 : 1 )];
