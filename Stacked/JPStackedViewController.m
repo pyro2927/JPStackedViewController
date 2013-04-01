@@ -7,6 +7,8 @@
 //
 
 #import "JPStackedViewController.h"
+#import <QuartzCore/QuartzCore.h>
+
 #define kMinWidth       50
 #define kSwipeMarginTime    0.1f
 #define kAnimationDuration  0.2f
@@ -245,6 +247,14 @@
         }
         //add our KVOs after view load
         [vc.view addObserver:self forKeyPath:@"frame" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
+        
+        //add in our dropshadows
+        vc.view.layer.masksToBounds = NO;
+        vc.view.layer.shadowOffset = CGSizeMake(-5, 0);
+        vc.view.layer.shadowRadius = 5;
+        vc.view.layer.shadowOpacity = 0.5;
+        //speed shadows up!
+        vc.view.layer.shadowPath = [UIBezierPath bezierPathWithRect:vc.view.bounds].CGPath;
     }
 }
 
