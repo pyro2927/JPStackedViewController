@@ -10,11 +10,10 @@
 
 typedef enum {
     JPSTYLE_TOUCH_VIEW_ANYWHERE = 0,
-    JPSTYLE_TOUCH_NAV_ONLY,
-    JPSTYLE_VIEW_HOP,
-    JPSTYLE_VIEW_HOP_LEFT,
-    JPSTYLE_IGNORE_BUTTONS,
-    JPSTYLE_COMPRESS_VIEWS
+    JPSTYLE_TOUCH_NAV_ONLY = 1 << 1,
+    JPSTYLE_VIEW_HOP = 1 << 2,
+    JPSTYLE_IGNORE_BUTTONS = 1 << 3,
+    JPSTYLE_COMPRESS_VIEWS = 1 << 4
 } JPSTYLE_TYPE;
 
 @interface JPStackedViewController : UIViewController<UIGestureRecognizerDelegate>{
