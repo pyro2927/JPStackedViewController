@@ -106,7 +106,7 @@
 -(void)hop:(UITapGestureRecognizer*)tapper{
     CGPoint translatedPoint = [tapper locationInView:tapper.view];
     int layer = tapper.view.tag;
-    __block UIView *view = [(UIViewController*)[stackedViews objectAtIndex:layer] view];
+    __weak UIView *view = [(UIViewController*)[stackedViews objectAtIndex:layer] view];
     __block CGRect frame = view.frame;
     __block int mod = (frame.origin.x == 0 ? 1 : -1 );
 //    slide out
@@ -187,7 +187,10 @@
             //min a crunched width
             //average between layer above and whole width
             //mutliply our compressed space by 2/3, 4/3, 1/2, etc
-            CGFloat compressedRight = (self.view.frame.size.width - x) * (CGFloat)((float)layer / (float)(layer + 1) );
+            CGFloat compressedRight = 0;
+            if (style & JPSTYLE_COMPRESS_VIEWS) {
+                compressedRight = (self.view.frame.size.width - x) * (CGFloat)((float)layer / (float)(layer + 1) );
+            }
             [self setView:aboveController.view xOffset:MIN(x + spacer,  self.view.frame.size.width - compressedRight)];
         }
     }
