@@ -242,10 +242,14 @@
             [leftswiper setDelegate:self];
             [leftswiper setDirection:UISwipeGestureRecognizerDirectionLeft];
             
-            if ([vc isKindOfClass:[UINavigationController class]]) {
+            if ([vc isKindOfClass:[UINavigationController class]] && (style & JPSTYLE_TOUCH_NAV_ONLY)) {
                 [((UINavigationController*)vc).navigationBar addGestureRecognizer:panner];
                 [((UINavigationController*)vc).navigationBar addGestureRecognizer:swiper];
                 [((UINavigationController*)vc).navigationBar addGestureRecognizer:leftswiper];
+            } else {
+                [vc.view addGestureRecognizer:panner];
+                [vc.view addGestureRecognizer:swiper];
+                [vc.view addGestureRecognizer:leftswiper];
             }
         }
         //add our KVOs after view load
